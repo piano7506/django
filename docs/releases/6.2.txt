@@ -184,7 +184,8 @@ Internationalization
 Logging
 ~~~~~~~
 
-* ...
+* The warning logged when a database error occurs while validating model
+  constraints now escapes the error message and trims it to 4096 characters.
 
 Management Commands
 ~~~~~~~~~~~~~~~~~~~
@@ -316,6 +317,13 @@ backends.
 
 * Support for GEOS 3.10 is removed.
 
+CSP
+---
+
+* A CSP directive whose only source is :attr:`~django.utils.csp.CSP.NONCE` is
+  now emitted as ``'none'`` when the nonce is unused, instead of being dropped
+  from the response header.
+
 Models
 ------
 
@@ -377,8 +385,19 @@ Miscellaneous
   submodules in ambiguous cases where depending on prior import state, a
   same-named attribute of the parent module might have been returned instead.
 
+* Directories created in the process of uploading files when
+  :setting:`FILE_UPLOAD_DIRECTORY_PERMISSIONS` (or
+  :attr:`~django.core.files.storage.FileSystemStorage.directory_permissions_mode`)
+  is set, and by the file-based cache backend, now have the requested
+  permissions mode combined with the process's umask value, matching the
+  semantics of Python's :func:`os.mkdir`. For example, a typical ``0o022``
+  umask leaves ``0o755`` unchanged but turns ``0o775`` into ``0o755``. Also,
+  the set-group-ID bit is no longer guaranteed to be set, even if specified in
+  the mode. To keep it on new subdirectories, set it on the parent directory.
+  :setting:`FILE_UPLOAD_PERMISSIONS` is unaffected.
+
 * The minimum supported version of ``asgiref`` is increased from 3.9.1 to
-  3.12.1.
+  3.13.
 
 * The minimum supported version of ``oracledb`` is increased from 2.3.0 to
   4.0.2.
@@ -388,6 +407,12 @@ Miscellaneous
   thread-sensitive thread, rather than on a shared thread pool, so that
   database connections used during error handling are managed by
   ``close_old_connections()``.
+
+* Django's built-in cached properties now use Python's
+  :func:`functools.cached_property`. Subclasses that override one with a
+  ``@property`` and call ``super()`` now get the cached value instead of
+  recomputing it, and accessing one on an instance without a ``__dict__``
+  raises ``TypeError`` instead of ``AttributeError``.
 
 .. _deprecated-features-6.2:
 
@@ -418,6 +443,9 @@ Miscellaneous
 
   Comparisons against one or two components, such as
   ``django.VERSION >= (6, 2)``, are unaffected.
+
+* :class:`django.utils.functional.cached_property` is deprecated in favor of
+  :func:`functools.cached_property`.
 
 * The :class:`~django.middleware.MiddlewareMixin` class moved from
   ``django.utils.deprecation`` to ``django.middleware``. The old import path
